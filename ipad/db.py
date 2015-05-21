@@ -12,8 +12,8 @@ class DB(object):
         if os.path.exists(self.db):
             return
         try:
-            with self.get_db() as cur:
-                cur.execute('CREATE TABLE changes (timestamp int,action text,data text)')
+            with self.get_db() as c:
+                c.execute('CREATE TABLE changes (timestamp int,action text,data text)')
         finally:
             self.__close()
             
@@ -27,7 +27,6 @@ class DB(object):
         return self.conn
 
     def record(self,msg):
-        if 'uid' in msg: del msg['uid']
         
         ac = msg['action']
         del msg['action']
@@ -35,15 +34,15 @@ class DB(object):
         del msg['timestamp']
 
         try:
-            with self.get_db() as cur:
-                cur.execute('insert into changes(timestamp,action,data) values(?,?,?)',(t,ac,json.dumps(msg)))
+            with self.get_db() as c:
+                c.execute('insert into changes(timestamp,action,data) values(?,?,?)',(t,ac,json.dumps(msg)))
         finally:
             self.__close()
 
     def delete_commits(self,t):
         try:
             with self.get_db() as c:
-                cur.execute('delete from changes where timestamp > ',(t,))
+                c.execute('delete from changes where timestamp > ',(t,))
         finally:
             self.__close()
                 
@@ -51,8 +50,9 @@ class DB(object):
         r= []
         try:
             with self.get_db() as c:
-                cur.execute('select timestamp,action,data from changes where timestamp %s ? order by timestamp desc'%op,(t,))
-                for t,a,d in cur.fetchall():
+                cr= c.cursor()
+                cr.execute('select timestamp,action,data from changes where timestamp %s ? order by timestamp desc'%op,(t,))
+                for t,a,d in cr.fetchall():
                     m = json.loads(d)
                     m.update({'action':a,'timestamp':t})
                     r.append(m)
@@ -61,4 +61,5 @@ class DB(object):
         return r
         
     
-
+    def get_all_commits(self):
+        return self._get_commits('>',0)

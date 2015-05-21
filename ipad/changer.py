@@ -36,8 +36,8 @@ class Changer(threading.Thread):
     
     def run(self):
     
-        ctx = zmq.Context()
-        in_sock = ctx.socket(zmq.SUB)
+        __ctx = zmq.Context()
+        in_sock = __ctx.socket(zmq.SUB)
         in_sock.setsockopt(zmq.SUBSCRIBE,'')
         in_sock.connect('tcp://localhost:1338')
 

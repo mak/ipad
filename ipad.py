@@ -3,7 +3,7 @@ import ipad.hooks as hooks
 from ipad.config import Config
 from ipad.db import DB
 from ipad.changer import Changer
-
+from ipad.ui import UI
 
 import zmq
 import json
@@ -18,34 +18,43 @@ def get_hash(m):
     return hashlib.sha256(d).hexdigest()
 
 class IdaAction(object):
-    def __init__(self,uid,db):
+    def __init__(self,uid,db,uhist):
         self.uid = uid
+        self.uhist = uhist
         self._init_zmq()
         self._init_db(db)
         self._init_hooks()
+
         
     def _init_zmq(self):
         
-        ctx = zmq.Context()
-        self.out_sock = ctx.socket(zmq.PUB)
+        __ctx = zmq.Context()
+        self.out_sock = __ctx.socket(zmq.PUB)
 
     def _init_db(self,db):
         self.db = DB(db)
 
     def _init_hooks(self):
         self.hooks = [ h(self) for h in hooks.HOOKS]
+
+
         
     def _handle_action(self,msg):
         t = timestamp()
         h = get_hash(msg)
         msg.update({'timestamp':t,'uid':self.uid,'hash':h})
+        del msg['uid']
+        self.uhist._append(msg)
         self.out_sock.send_json(msg)
         self.db.record(msg)
+
         del msg
 
     def start(self):
+        self.uhist._populate(self.db.get_all_commits())
         self.out_sock.connect('tcp://localhost:1337')
         self._start_hooks()
+        
         
     def relaod_hooks(self):
         global hooks
@@ -76,21 +85,30 @@ class changer(idaapi.plugin_t):
     def init(self):
         self.cfg = Config()
         self.t = Changer(self.cfg.uid)
-        self.a = IdaAction(self.cfg.uid,self.cfg.db)
+        self.ui = UI()
         
+        self.a = IdaAction(self.cfg.uid,self.cfg.db,self.ui.history)
         print '[*] start - with uid: %s and db: %s' % (self.cfg.uid,self.cfg.db)
         return idaapi.PLUGIN_OK
     
     def run(self,arg):
+        self.ui.Show('ipad')
         self.t.start()
         self.a.start()
 
+        
 
     def term(self):
+        print '[+] going down'
         self.a.end()
         self.t.stop()
+        self.t.join()
+
+    def __del__(self):
+        super(changer,self).__del__()
+        self.term()
     
-    
+        
 
 def PLUGIN_ENTRY():
   return changer()
