@@ -20,8 +20,8 @@ def dispath(args):
 
     ### dispath idp events 
     if a.action == 'rename':
-        debug('[*] renaming %s to %s @ %x' % (old_name,a.new_name,a.ea))
-        idc.MakeNameEx(a.ea,a.new_name,idaapi.SN_NOWARN)
+        debug('[*] renaming %s to %s @ %x' % (a.old_name,a.new_name,a.ea))
+        idc.MakeNameEx(a.ea,str(a.new_name),idaapi.SN_NOWARN)
         return 
     
     ## dispath idb events
