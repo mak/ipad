@@ -12,7 +12,13 @@ class IDPH(idaapi.IDP_Hooks):
         self.ctrl._handle_action({'ea':ea,'old_name':old_name,'new_name':new_name,'action':'rename'})
         return 0
 
+    def savebase(self):
+        if idc.AskYN(True,'Clear current history?'):
+            self.ctrl.db.clear_history()
+            self.ctrl.uhist._clear()
+        return 0
 
+            
     
 class IDBH(idaapi.IDB_Hooks):
 
@@ -76,41 +82,77 @@ class IDBH(idaapi.IDB_Hooks):
         return 0
 
     def	struc_deleted(self, struct):
-        sname = idc.GetStrucName(struct)
+        sid=  struct.id
+        sname = idc.GetStrucName(sid)
         self.ctrl._handle_action({'action':'struct_deleted',
                                   'struct':struct,'sname':sname})
         return 0
 
     def	struc_renamed(self, struct):
-        sname = idc.GetStrucName(struct)
+        sid = struct.id
+        sname = idc.GetStrucName(sid)
         self.ctrl._handle_action({'action':'struct_renamed',
-                                  'struct':struct,'sname':sname})
+                                  'struct':sid,'sname':sname})
         return 0
     
     def	struc_expanded(self, struct):
-        sname = idc.GetStrucName(struct)
-        size = idc.GetStrucSize(struct)
+        sid = struct.id
+        sname = idc.GetStrucName(sid)
+        size = idc.GetStrucSize(sid)
         self.ctrl._handle_action({'action':'struct_expanded',
-                                  'struct':struct,'sname':sname,'size':size})
+                                  'struct':sid,'sname':sname,'size':size})
         return 0
-    def	struc_cmt_changed(self, struct):        
-        sname = idc.GetStrucName(struct)
+    def	struc_cmt_changed(self, struct):
+        sid = struct.id
+        sname = idc.GetStrucName(sid)
         cmt = idc.GetEnumCmt(struct,0)
         self.ctrl._handle_action({'action':'struct_cmt_changed',
-                                  'struct':struct,'sname':sname,
+                                  'struct':sid,'sname':sname,
                                   'cmt':cmt})
         return 0
         
     def	struc_member_created(self, struct, membr):
-        sname = idc.GetStrucName(struct)
-        mname = idc.GetMemberName(struct,membr)
+        sid= struct.id
+        mid = membr.id
+        moff =membr.soff 
+        flag = membr.flag
+        size = idc.GetMemberSize(sid,moff)
+        sname = idc.GetStrucName(sid)
+        mname = idc.GetMemberName(sid,moff)
+        
+        self.ctrl._handle_action({'action':'struct_deleted','struct':sid,'member':mid,
+                                  'sname':sname,'mname':mname,
+                                  'off':moff,'flag':flag,'size':size})
         return 0
     
-    def	struc_member_deleted(self, struct, membr, arg2):
+    def	struc_member_deleted(self, struct, mid, moff):
+        sid= struct.id
+        sname = idc.GetStrucName(sid)
+        self.ctrl._handle_action({'action':'struct_deleted','struct':sid,'sname':sname,'member':mid,'off':moff})
         return 0
+    
     def	struc_member_renamed(self, struct, membr):
+        sid= struct.id
+        mid = membr.id
+        moff =membr.soff 
+        sname = idc.GetStrucName(sid)
+        mname = idc.GetMemberName(sid,moff)
+        self.ctrl._handle_action({'action':'struct_member_changed','struct':sid,'member':mid,
+                                  'sname':sname,'mname':mname,'off':moff})
         return 0
     def	struc_member_changed(self, struct, membr):
+        sid= struct.id
+        mid = membr.id
+        moff =membr.soff 
+        sname = idc.GetStrucName(sid)
+        mname = idc.GetMemberName(sid,moff)
+
+        flag = membr.flag
+        size = idc.GetMemberSize(sid,moff)
+        self.ctrl._handle_action({'action':'struct_member_changed','struct':sid,'member':mid,
+                                  'sname':sname,'mname':mname,
+                                  'off':moff,'flag':flag,'size':size})
+
         return 0
         
 HOOKS = [IDPH,IDBH]

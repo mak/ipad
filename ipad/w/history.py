@@ -25,12 +25,19 @@ class WHistory(QtGui.QMainWindow):
     def setDB(self,db):
         self.db = db
 
+    def _clear(self):
+        self.hist_elem.clear()
+        self.hist_list.clear()
+        self.hist_list.setRowCount(0)
+        self.hist_elem.setRowCount(0)
+        self.hist_list_label = ['timestamp','action']
+        self.hist_list.setColumnCount(len(self.hist_list_label))
+        self.hist_list.setHorizontalHeaderLabels(self.hist_list_label)
         
     def _populate(self,array):
         self.hist_list_label = ['timestamp','action']
-        self.hist_list.clear()
-        self.hist_list.setColumnCount(len(self.hist_list_label))
-        self.hist_list.setHorizontalHeaderLabels(self.hist_list_label)
+        self._clear()
+    
         self.hist_list.setRowCount(len(array))
             
         for row,el in enumerate(array):

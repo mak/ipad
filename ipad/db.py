@@ -39,10 +39,13 @@ class DB(object):
         finally:
             self.__close()
 
+    def clear_history(self):
+        self.delete_commits(0)
+            
     def delete_commits(self,t):
         try:
             with self.get_db() as c:
-                c.execute('delete from changes where timestamp > ',(t,))
+                c.execute('delete from changes where timestamp > ?',(t,))
         finally:
             self.__close()
                 
