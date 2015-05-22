@@ -11,7 +11,6 @@ class UI(idaapi.PluginForm):
         super(UI,self).__init__()
         self.setupWidgets()
         self.QtGui = QtGui ## workaround for missing ctx in idaapi...
-
         
     def OnCreate(self,form):
         self.parent = self.FormToPySideWidget(form,self)

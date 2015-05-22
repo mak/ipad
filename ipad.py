@@ -42,9 +42,10 @@ class IdaAction(object):
     def _handle_action(self,msg):
         t = timestamp()
         h = get_hash(msg)
-        msg.update({'timestamp':t,'uid':self.uid,'hash':h})
-        del msg['uid']
+        msg.update({'timestamp':t})
         self.uhist._append(msg)
+        
+        msg.update({'uid':self.uid,'hash':h})
         self.out_sock.send_json(msg)
         self.db.record(msg)
 
@@ -84,11 +85,13 @@ class changer(idaapi.plugin_t):
 
     def init(self):
         self.cfg = Config()
-        self.t = Changer(self.cfg.uid)
         self.ui = UI()
         
+        self.t = Changer(self.cfg.uid) #,self.ui.parent)
+#        self.t.finished.connect(self.parent)
+        
         self.a = IdaAction(self.cfg.uid,self.cfg.db,self.ui.history)
-        print '[*] start - with uid: %s and db: %s' % (self.cfg.uid,self.cfg.db)
+        print '[*] ipad started - uid: %s | db: %s' % (self.cfg.uid,self.cfg.db)
         return idaapi.PLUGIN_OK
     
     def run(self,arg):
@@ -101,7 +104,7 @@ class changer(idaapi.plugin_t):
     def term(self):
         print '[+] going down'
         self.a.end()
-        self.t.stop()
+        self.t.terminate()
         self.t.join()
 
     def __del__(self):

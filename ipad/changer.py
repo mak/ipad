@@ -1,21 +1,21 @@
 import zmq
 import threading 
-
 import ipad.dispatch as dp
+from PySide import QtCore
 
 
 
-class Changer(threading.Thread):
-    def __init__(self,uid):
-        super(Changer, self).__init__()
-        self._stop = threading.Event()
+class Changer(QtCore.QThread):
+    def __init__(self,uid,p=None):
+        super(Changer, self).__init__(p)
+#        self._stop = threading.Event()
         self.uid = uid
         
-    def stop(self):
-        self._stop.set()
+    # def stop(self):
+    #     self._stop.set()
         
-    def stopped(self):
-        return self._stop.isSet()
+    # def stopped(self):
+    #     return self._stop.isSet()
 
     def dispath(self,msg):
         print msg
@@ -44,7 +44,7 @@ class Changer(threading.Thread):
         poller = zmq.Poller()
         poller.register(in_sock,zmq.POLLIN)
         while True:
-            if self.stopped(): break
+            #if self.stopped(): break
             
             try:
                 ev = dict(poller.poll(500))
