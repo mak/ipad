@@ -33,6 +33,7 @@ class IdaAction(object):
 
     def _init_db(self,db):
         self.db = DB(db)
+        self.uhist.setDB(self.db)
 
     def _init_hooks(self):
         self.hooks = [ h(self) for h in hooks.HOOKS]
@@ -44,10 +45,13 @@ class IdaAction(object):
         h = get_hash(msg)
         msg.update({'timestamp':t})
         self.uhist._append(msg)
-        
+
         msg.update({'uid':self.uid,'hash':h})
         self.out_sock.send_json(msg)
+
         self.db.record(msg)
+        
+
 
         del msg
 

@@ -1,7 +1,7 @@
 
 from PySide import QtGui, QtCore
 from PySide.QtGui import QIcon
-import datetime
+import datetime,json
 
 class WHistory(QtGui.QMainWindow):
 
@@ -12,14 +12,19 @@ class WHistory(QtGui.QMainWindow):
         self.icon = QIcon('')
         self.rcount = 0
         
-        self._prepare_list()
+        self._prepare()
 
-        # widg = QtGui.QWidget()
-        # wlay = QtGui.QVBoxLayout()
-        # wlay.addWidget(self.hist_list)
-        # widg.setLayout(wlay)
+        widg = QtGui.QWidget()
+        wlay = QtGui.QVBoxLayout()
+        wlay.addWidget(self.hist_list)
+        wlay.addWidget(self.hist_elem)
+        widg.setLayout(wlay)
 
-        self.setCentralWidget(self.hist_list)
+        self.setCentralWidget(widg)
+
+    def setDB(self,db):
+        self.db = db
+
         
     def _populate(self,array):
         self.hist_list_label = ['timestamp','action']
@@ -55,12 +60,31 @@ class WHistory(QtGui.QMainWindow):
         
         
     def _onHistClicked(self,mi):
-        print 'clicked'
+
+        cmt =  self.db.get_commit_via_id(mi.row()+1)
+        msg = json.loads(cmt[-1])
+        msg.update({'action':cmt[1],'timestamp':cmt[0]})
+
+        self.hist_elem_label = ['key','value']
+        self.hist_elem.clear()
+        self.hist_elem.setColumnCount(len(self.hist_elem_label))
+        self.hist_elem.setHorizontalHeaderLabels(self.hist_elem_label)
+        self.hist_elem.setRowCount(len(msg))
+        for row,elm in enumerate(msg.items()):
+            for cl,el in enumerate(elm):
+                itm = QtGui.QTableWidgetItem(str(el))
+                self.hist_elem.setItem(row,cl,itm)
+            self.hist_elem.resizeRowToContents(row)
+        self.hist_elem.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)    
+        self.hist_elem.resizeColumnsToContents()
+
+
             
-    def _prepare_list(self):
+    def _prepare(self):
         self.hist_list = QtGui.QTableWidget()
         self.hist_list.clicked.connect(self._onHistClicked)
 
-
+        self.hist_elem = QtGui.QTableWidget()
+        
 
 

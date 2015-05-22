@@ -13,7 +13,7 @@ class DB(object):
             return
         try:
             with self.get_db() as c:
-                c.execute('CREATE TABLE changes (timestamp int,action text,data text)')
+                c.execute('CREATE TABLE changes (id integer primary key,timestamp int,action text,data text)')
         finally:
             self.__close()
             
@@ -60,6 +60,18 @@ class DB(object):
             self.__close()
         return r
         
+
+    def get_commit_via_id(self,_id):
+        r = None
+        try:
+            with self.get_db() as c:
+                cr= c.cursor()
+                cr.execute('select timestamp,action,data from changes where id = ?',(_id,))
+                r = cr.fetchone()
+        finally:
+            self.__close()
+        return r
+
     
     def get_all_commits(self):
         return self._get_commits('>',0)

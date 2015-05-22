@@ -14,7 +14,6 @@ class UI(idaapi.PluginForm):
         
     def OnCreate(self,form):
         self.parent = self.FormToPySideWidget(form,self)
-
         self.PupulateForm()
 
         
