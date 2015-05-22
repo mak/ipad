@@ -9,11 +9,20 @@ import zmq
 import json
 import hashlib
 import datetime,threading
+from copy import deepcopy
 
 def timestamp():
     return int(datetime.datetime.now().strftime('%s'))
 
-def get_hash(m):
+def get_hash(_m):
+    m = deepcopy(_m)
+
+    ## there are some fields that will change
+    ## no mater what.. so remove them...
+    if 'struct' in m: del m['struct']
+    if 'member' in m: del m['member']
+    if 'enum'   in m: del m['enum']
+
     d = json.dumps(m,sort_keys=True,indent=0)
     return hashlib.sha256(d).hexdigest()
 
@@ -43,10 +52,9 @@ class IdaAction(object):
     def _handle_action(self,msg):
         t = timestamp()
         h = get_hash(msg)
-        msg.update({'timestamp':t})
+        msg.update({'timestamp':t,'uid':self.uid,'hash':h})
+        
         self.uhist._append(msg)
-
-        msg.update({'uid':self.uid,'hash':h})
         self.out_sock.send_json(msg)
 
         self.db.record(msg)

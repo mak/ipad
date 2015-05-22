@@ -14,6 +14,7 @@ class DB(object):
         try:
             with self.get_db() as c:
                 c.execute('CREATE TABLE changes (id integer primary key,timestamp int,action text,data text)')
+                c.execute('create table structs (id integer, idx integer)')
         finally:
             self.__close()
             
@@ -78,3 +79,30 @@ class DB(object):
     
     def get_all_commits(self):
         return self._get_commits('>',0)
+
+
+    def struct_add(self,sid,idx):
+        try:
+            with self.get_db() as c:
+                c.execute('insert into structs(id,idx) values(?,?)',(sid,idx))
+        finally:
+            self.__close()
+
+    def struct_get_idx(self,sid):
+        r= None
+        try:
+            with self.get_db() as c:
+                cur = c.cursor()
+                cur.execute('select idx from structs where id = ?',(sid,))
+                r=cur.fetchone()
+        finally:
+            self.__close()
+        return r[0] if r else r
+
+    def struct_del(self,sid):
+        try:
+            with self.get_db() as c:
+                c.execute('delete from structs where id = ?',(sid,))
+        finally:
+            self.__close()
+    

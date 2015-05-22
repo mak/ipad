@@ -75,39 +75,45 @@ class IDBH(idaapi.IDB_Hooks):
 
     ## handle structs
     def	struc_created(self, struct):
+        ### we have to maintain our own struct db
+        ## becuse ida sux... 
         sname = idc.GetStrucName(struct)
         union = idc.IsUnion(struct)
+        idx = idc.GetStrucIdx(struct)
         self.ctrl._handle_action({'action':'struct_created',
-                                  'struct':struct,'sname':sname,'union':union})
+                                  'struct':idx,'sname':sname,'union':union})
+        self.ctrl.db.struct_add(struct,idx)
         return 0
 
-    def	struc_deleted(self, struct):
-        sid=  struct.id
-        sname = idc.GetStrucName(sid)
-        self.ctrl._handle_action({'action':'struct_deleted',
-                                  'struct':struct,'sname':sname})
+    def	struc_deleted(self, sid):
+        print sid
+        idx = self.ctrl.db.struct_get_idx(sid)
+        self.ctrl._handle_action({'action':'struct_deleted','struct':idx})
+        self.ctrl.db.struct_del(sid)
         return 0
 
     def	struc_renamed(self, struct):
         sid = struct.id
+        idx = idc.GetStrucIdx(sid)
         sname = idc.GetStrucName(sid)
         self.ctrl._handle_action({'action':'struct_renamed',
-                                  'struct':sid,'sname':sname})
+                                  'struct':idx,'sname':sname})
         return 0
     
     def	struc_expanded(self, struct):
         sid = struct.id
         sname = idc.GetStrucName(sid)
         size = idc.GetStrucSize(sid)
+        idx = idc.GetStrucIdx(sid)
         self.ctrl._handle_action({'action':'struct_expanded',
-                                  'struct':sid,'sname':sname,'size':size})
+                                  'struct':idx,'sname':sname,'size':size})
         return 0
-    def	struc_cmt_changed(self, struct):
-        sid = struct.id
+    def	struc_cmt_changed(self, sid):
+        idx = idc.GetStrucIdx(sid)
         sname = idc.GetStrucName(sid)
-        cmt = idc.GetEnumCmt(struct,0)
+        cmt = idc.GetEnumCmt(sid,0)
         self.ctrl._handle_action({'action':'struct_cmt_changed',
-                                  'struct':sid,'sname':sname,
+                                  'struct':idx,'sname':sname,
                                   'cmt':cmt})
         return 0
         
@@ -119,25 +125,27 @@ class IDBH(idaapi.IDB_Hooks):
         size = idc.GetMemberSize(sid,moff)
         sname = idc.GetStrucName(sid)
         mname = idc.GetMemberName(sid,moff)
-        
-        self.ctrl._handle_action({'action':'struct_deleted','struct':sid,'member':mid,
+        idx = idc.GetStrucIdx(sid)
+        self.ctrl._handle_action({'action':'struct_member_created','struct':idx,'member':mid,
                                   'sname':sname,'mname':mname,
                                   'off':moff,'flag':flag,'size':size})
         return 0
     
     def	struc_member_deleted(self, struct, mid, moff):
         sid= struct.id
+        idx = idc.GetStrucIdx(sid)
         sname = idc.GetStrucName(sid)
-        self.ctrl._handle_action({'action':'struct_deleted','struct':sid,'sname':sname,'member':mid,'off':moff})
+        self.ctrl._handle_action({'action':'struct_member_deleted','struct':idx,'sname':sname,'member':mid,'off':moff})
         return 0
     
     def	struc_member_renamed(self, struct, membr):
         sid= struct.id
         mid = membr.id
-        moff =membr.soff 
+        moff =membr.soff
+        idx = idc.GetStrucIdx(sid)
         sname = idc.GetStrucName(sid)
         mname = idc.GetMemberName(sid,moff)
-        self.ctrl._handle_action({'action':'struct_member_changed','struct':sid,'member':mid,
+        self.ctrl._handle_action({'action':'struct_member_renamed','struct':idx,'member':mid,
                                   'sname':sname,'mname':mname,'off':moff})
         return 0
     def	struc_member_changed(self, struct, membr):
@@ -146,10 +154,10 @@ class IDBH(idaapi.IDB_Hooks):
         moff =membr.soff 
         sname = idc.GetStrucName(sid)
         mname = idc.GetMemberName(sid,moff)
-
+        idx = idc.GetStrucIdx(sid)
         flag = membr.flag
         size = idc.GetMemberSize(sid,moff)
-        self.ctrl._handle_action({'action':'struct_member_changed','struct':sid,'member':mid,
+        self.ctrl._handle_action({'action':'struct_member_changed','struct':idx,'member':mid,
                                   'sname':sname,'mname':mname,
                                   'off':moff,'flag':flag,'size':size})
 
