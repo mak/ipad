@@ -1,11 +1,12 @@
 import idc
 import idaapi
+from ipad.compat import add_compat_functions
 
 DEBUG = True
 def debug(msg):
     if DEBUG: print msg
 
-
+idc = add_compat_functions(idc)
     
 def dispath(args):
 
