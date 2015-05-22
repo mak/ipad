@@ -16,6 +16,7 @@ def sender():
     last_hashes=[]
     while True:
         msg = Q.get()
+        if msg=='quit': break
         print msg
         
         if msg['hash'] in last_hashes: continue
@@ -28,13 +29,18 @@ def sender():
 ts = threading.Thread(target=sender)
 ts.start()
 
-while True:
-    try:
-        ev = dict(poller.poll(500))
-    except zmq.ZMQError as e:
-        print '0MQ exc: %s'%`e`
-        break
+
+try:
+    while True:
+        try:
+            ev = dict(poller.poll(500))
+        except zmq.ZMQError as e:
+            print '0MQ exc: %s'%`e`
+            break
     
-    if in_sock in ev:
-        msg = in_sock.recv_json()
-        Q.put(msg)
+        if in_sock in ev:
+            msg = in_sock.recv_json()
+            Q.put(msg)
+except KeyboardInterrupt:
+    print 'cc-break'
+    Q.put('quit')
