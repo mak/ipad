@@ -55,6 +55,26 @@ def dispath(args):
         debug('[*] Struct(%d - %x) %s - cmt changed',a.struct,sid,a.sname)
         idc.SetStrucComment(sid,a.cmt,0)
 
+    if a.action == 'struct_expanded':
+        pass
+        
+    if a.action == 'struct_member_created':
+        pass
+
+    if a.action == 'struct_member_deleted':
+        pass
+    if a.action == 'struct_member_renamed':
+        pass
+    if a.action == 'struct_member_changed':
+        pass
+    if a.action == 'struct_member_':
+        pass
+    if a.action == 'struct_member_created':
+        pass
+    if a.action == 'struct_member_created':
+        pass
+
+    
     # if a.action == 'struct_expanded':
     #     debug('
         

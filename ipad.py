@@ -1,10 +1,15 @@
 
+## my imports
+import ipad.dispatch as dp 
 import ipad.hooks as hooks
 from ipad.config import Config
 from ipad.db import DB
 from ipad.changer import Changer
 from ipad.ui import UI
+from ipad.cmd import Commands
 
+## other things
+import os
 import zmq
 import json
 import hashlib
@@ -27,11 +32,12 @@ def get_hash(_m):
     return hashlib.sha256(d).hexdigest()
 
 class IdaAction(object):
-    def __init__(self,uid,db,uhist):
-        self.uid = uid
+    def __init__(self,cfg,uhist):
+        self.cfg = cfg
+        self.uid = cfg.uid
         self.uhist = uhist
         self._init_zmq()
-        self._init_db(db)
+        self._init_db(cfg.db)
         self._init_hooks()
 
         
@@ -43,24 +49,28 @@ class IdaAction(object):
     def _init_db(self,db):
         self.db = DB(db)
         self.uhist.setDB(self.db)
+        self.uhist.setUser(self.cfg.user)
 
     def _init_hooks(self):
         self.hooks = [ h(self) for h in hooks.HOOKS]
-
-
-        
+     
     def _handle_action(self,msg):
         t = timestamp()
         h = get_hash(msg)
-        msg.update({'timestamp':t,'uid':self.uid,'hash':h})
+        msg.update({'timestamp':t,'hash':h})
+
+        ## this is local one
+        if 'user'  not in msg:
+            msg.update({'user':self.cfg.user,'key':self.cfg.key,'ssid':self.cfg.ssid})
+            self.out_sock.send_json(msg)
+            del msg['key']
+            
+        # this is remote one
+        elif self.cfg.automatic:
+            dp.dispath(msg)
         
         self.uhist._append(msg)
-        self.out_sock.send_json(msg)
-
         self.db.record(msg)
-        
-
-
         del msg
 
     def start(self):
@@ -99,10 +109,14 @@ class changer(idaapi.plugin_t):
         self.cfg = Config()
         self.ui = UI()
         
-        self.t = Changer(self.cfg.uid) #,self.ui.parent)
-#        self.t.finished.connect(self.parent)
-        
-        self.a = IdaAction(self.cfg.uid,self.cfg.db,self.ui.history)
+        if not os.path.exists(self.cfg.dirname()):
+            os.mkdir(self.cfg.dirname())
+
+        self.cfg.load_cfg()
+        self.a = IdaAction(self.cfg,self.ui.history)
+        self.t = Changer(self.a)
+        print self.t
+        self.cc = Commands(self.a,self.t)
         print '[*] ipad started - uid: %s | db: %s' % (self.cfg.uid,self.cfg.db)
         return idaapi.PLUGIN_OK
     
@@ -110,8 +124,6 @@ class changer(idaapi.plugin_t):
         self.ui.Show('ipad')
         self.t.start()
         self.a.start()
-
-        
 
     def term(self):
         print '[+] going down'

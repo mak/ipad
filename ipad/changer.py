@@ -1,4 +1,5 @@
 import zmq
+import json
 import threading 
 import ipad.dispatch as dp
 from PySide import QtCore
@@ -6,10 +7,10 @@ from PySide import QtCore
 
 
 class Changer(QtCore.QThread):
-    def __init__(self,uid,p=None):
+    def __init__(self,c,p=None):
         super(Changer, self).__init__(p)
 #        self._stop = threading.Event()
-        self.uid = uid
+        self.c = c
         
     # def stop(self):
     #     self._stop.set()
@@ -23,22 +24,29 @@ class Changer(QtCore.QThread):
             print '[-] wrong json...'
             return
         
-        if not 'uid' in msg:
+        if not 'user' in msg:
             print '[-] wrong json...'
             return
         
-        if msg['uid'] == self.uid:
+        if msg['user'] == self.c.cfg.user:
             ## we dont care about our msgs...
             return
 
-        dp.dispath(msg)
+        self.c._handle_action(msg)
         return 0
     
     def run(self):
-    
+
+        try:
+            ssid = hex(self.c.cfg.ssid).lstrip('0x')
+        except AttributeError:
+            print 'err'
+            ## we are not attached to any session yet
+            return 
+        
         __ctx = zmq.Context()
         in_sock = __ctx.socket(zmq.SUB)
-        in_sock.setsockopt(zmq.SUBSCRIBE,'')
+        in_sock.setsockopt(zmq.SUBSCRIBE,ssid)
         in_sock.connect('tcp://localhost:1338')
 
         poller = zmq.Poller()
@@ -52,6 +60,9 @@ class Changer(QtCore.QThread):
                 print '0MQ exc: %s'%`e`
                 break
             if in_sock in ev:
-                self.dispath(in_sock.recv_json())
+                [_, msg] = in_sock.recv_multipart()
+                print msg
+                msg = json.loads(msg)
+                self.dispath(msg)
                 
         in_sock.close()
