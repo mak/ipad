@@ -3,6 +3,20 @@ from PySide import QtGui, QtCore
 from PySide.QtGui import QIcon
 import datetime,json
 
+class MyItem(QtGui.QTableWidgetItem):
+
+    def __init__(self,*a,**k):
+        super(MyItem,self).__init__(*a,**k)
+        self.__data= None
+
+    @property
+    def xdata(self):
+        return self.__data
+    @xdata.setter
+    def xdata(self,v):
+        self.__data = v
+        
+
 class WHistory(QtGui.QMainWindow):
 
     def __init__(self,parent):
@@ -20,7 +34,7 @@ class WHistory(QtGui.QMainWindow):
         self.popMenu.addAction(self.acc_apply)
         self.acc_remov.triggered.connect(self.do_acc_remov)
         self.popMenu.addAction(self.acc_remov)
-        
+  
         widg = QtGui.QWidget()
         wlay = QtGui.QVBoxLayout()
         wlay.addWidget(self.hist_list)
@@ -43,7 +57,7 @@ class WHistory(QtGui.QMainWindow):
         self.hist_list_label = ['timestamp','action','origin']
         self.hist_list.setColumnCount(len(self.hist_list_label))
         self.hist_list.setHorizontalHeaderLabels(self.hist_list_label)
-        
+
     def _populate(self,array):
         self.hist_list_label = ['timestamp','action','origin']
         self._clear()
@@ -53,11 +67,12 @@ class WHistory(QtGui.QMainWindow):
         for row,el in enumerate(array):
             for cl,clname in enumerate(self.hist_list_label):
                 if cl == 0:
-                    itm = QtGui.QTableWidgetItem(str(datetime.datetime.fromtimestamp(el['timestamp'])))
+                    itm = MyItem(str(datetime.datetime.fromtimestamp(int(el['timestamp']))))
                 elif cl == 1:
-                    itm = QtGui.QTableWidgetItem(el['action'])
+                    itm = MyItem(el['action'])
                 elif cl ==2:
-                    itm = QtGui.QTableWidgetItem('local' if el['user'] == self.user else 'remote')
+                    itm = MyItem('local' if el['user'] == self.user else 'remote')
+                itm.xdata = el
                 self.hist_list.setItem(row,cl,itm)
             self.hist_list.resizeRowToContents(row)
         self.hist_list.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)    
@@ -69,22 +84,24 @@ class WHistory(QtGui.QMainWindow):
         self.hist_list.setRowCount(nrow+1)
         for cl,clname in enumerate(self.hist_list_label):
             if cl == 0:
-                itm = QtGui.QTableWidgetItem(str(datetime.datetime.fromtimestamp(el['timestamp'])))
+                itm = MyItem(str(datetime.datetime.fromtimestamp(int(el['timestamp']))))
             elif cl == 1:
-                itm = QtGui.QTableWidgetItem(el['action'])
+                itm = MyItem(el['action'])
             elif cl ==2:
-                itm = QtGui.QTableWidgetItem('local' if el['user'] == self.user else 'remote')
+                itm = MyItem('local' if el['user'] == self.user else 'remote')
+            itm.xdata = el
             self.hist_list.setItem(nrow,cl,itm)
         self.hist_list.resizeRowToContents(nrow)
         self.hist_list.resizeColumnsToContents()
         
         
         
-    def _onHistClicked(self,mi):
+    def _onHistClicked(self,idx):
 
-        cmt =  self.db.get_commit_via_id(mi.row()+1)
-        msg = json.loads(cmt[-1])
-        msg.update({'action':cmt[1],'timestamp':cmt[0]})
+        msg = self.hist_list.itemFromIndex(idx).xdata
+        # cmt =  self.db.get_commit_via_id(mi.row()+1)
+        # msg = json.loads(cmt[-1])
+        # msg.update({'action':cmt[1],'timestamp':cmt[0]})
 
         self.hist_elem_label = ['key','value']
         self.hist_elem.clear()
@@ -92,6 +109,7 @@ class WHistory(QtGui.QMainWindow):
         self.hist_elem.setHorizontalHeaderLabels(self.hist_elem_label)
         self.hist_elem.setRowCount(len(msg))
         for row,elm in enumerate(msg.items()):
+            has_itm = False
             for cl,el in enumerate(elm):
                 itm = QtGui.QTableWidgetItem(str(el))
                 self.hist_elem.setItem(row,cl,itm)
@@ -110,12 +128,18 @@ class WHistory(QtGui.QMainWindow):
 
         
     def ctxMenu(self,point):
-        print 'hophop'
         self.popMenu.exec_(self.hist_list.mapToGlobal(point))
 
     def do_acc_apply(self):
-        print 'apply'
+        indexes = self.hist_list.selectedIndexes()
+        idx = indexes[0]
+        data = self.hist_list.itemFromIndex(idx).xdata
+        self.parent.ctrl.dispatch(data)
+        
     def do_acc_remov(self):
+        indexes = self.hist_list.selectedIndexes()
+        idx = indexes[0]
+        data = self.hist_list.itemFromIndex(idx).xdata
         print 'remove'
 
             

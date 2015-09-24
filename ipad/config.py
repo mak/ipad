@@ -43,7 +43,11 @@ class C(object):
 class Config(C):
 
 
-    cfg_file = os.path.join(idaapi.get_user_idadir(),'ipad',C.filename() +'.cfg')
+    cfg_file = None
+
+    def __init__(self,*a,**k):
+        super(Config,self).__init__(*a,**k)
+        self.cfg_file = os.path.join(idaapi.get_user_idadir(),'ipad',C.filename() +'.cfg')
 
     def __get_default_uid(self):
         self.uid  = str(uuid.uuid4()).replace('-','')
@@ -55,8 +59,11 @@ class Config(C):
 
 
     def load_cfg(self):
+        if not bool(idc.GetIdbPath()):
+            self.cfg_file = self.main_cfg
+            
         self.parse_config(self.cfg_file)
-        for f in ['user','key']:
+        for f in ['user','key','automatic']:
            setattr(self,f,self.main[f])
 
     def save_file(self):
@@ -87,8 +94,9 @@ class Config(C):
     @property
     def ssid(self):
         return int(self.main.ssid)
+    
     @ssid.setter
-    def ssid(self,):
+    def ssid(self,v):
         self.set_value('ssid',v)
         
 __all__ = [Config]

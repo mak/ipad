@@ -8,7 +8,7 @@ def debug(msg,*args):
 
 idc = add_compat_functions(idc)
     
-def dispath(args):
+def dispatch(args):
 
     
     ## dispatch args....
@@ -19,13 +19,13 @@ def dispath(args):
     del args
 
 
-    ### dispath idp events 
+    ### dispatch idp events 
     if a.action == 'rename':
         debug('[*] renaming %s to %s @ %x' ,a.old_name,a.new_name,a.ea)
         idc.MakeNameEx(a.ea,str(a.new_name),idaapi.SN_NOWARN)
         return 
     
-    ## dispath idb events
+    ## dispatch idb events
     if a.action == 'cmt_changed':
         if not a.cmt: a.cmt = ''
         _pcmt = a.cmt if len(a.cmt)<10 else a.cmt[:10]+'...'

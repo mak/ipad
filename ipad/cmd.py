@@ -38,7 +38,7 @@ class Commands(object):
         wait(5)
         print '[*] please wait untill aa is finished'
         wait(15)
-        self.plg._start_hooks()
+        #self.plg._start_hooks()
         print '[+] hooks re-luched'
 
     def session_is_exec(self,ssid):
@@ -48,13 +48,16 @@ class Commands(object):
     def load_idb(self,uid,ssid):
         r = self.cmd('get',data={'ssid':ssid,'uid':uid})
         name = r.headers['X-IDB-Name']
+        if not self.session_is_exec(ssid):
+            name +='.idb'
+            
         with open('/tmp/ipad/'+name,'w') as f:
             f.write(r.content)
 
         ## terminate ipad
-        self.plg._stop_hooks()
+        #self.plg._stop_hooks()
 
-        threading.Thread(target=self._relunch).start()
+        #threading.Thread(target=self._relunch).start()
         self.op.open_file('/tmp/ipad/'+name)
 
     def store_idb(self):
@@ -63,13 +66,13 @@ class Commands(object):
         try:
             ssid = self.cfg.ssid
         except AttributeError:
-            ## this first store
+            ## this is first store
             pass
 
         if not ssid:
             ssid = '0'
             p = os.path.join(os.getcwd(),idc.GetInputFile())
-            
+            tag = 'init'
         elif self.session_is_exec(ssid):
             ssid = '0'
             p = idc.GetIdbPath()
@@ -77,14 +80,31 @@ class Commands(object):
             p = idc.GetIdbPath()
             
 
+        if p == idc.GetIdbPath():
+            tag= idc.AskStr('tag','Plase give it a name')
+            if not tag:
+                return
+            
         with open(p) as f:
             data = f.read()
             
         h = hashlib.sha256(data).hexdigest()
-        data = {'ssid':ssid,'uid':self.cfg.uid,'hash':h}
+        data = {'ssid':ssid,'uid':self.cfg.uid,'hash':h,'tag':tag}
         r= self.cmd('create_idb',data=data,files={'data':open(p,'rb')}).json()
         if r['session'] != ssid:
             self.cfg.ssid = r['session']
             print self.ch
             self.ch.start()
         
+    def get_storage(self):
+        r = self.cmd('list')
+        return r.json()
+
+    def get_changes(self):
+        r = self.cmd('get_changes',data={'ssid':self.cfg.ssid})
+        for msg in r.json():
+            self.plg.db.record(msg)
+
+    def get_sessions(self):
+        r = self.cmd('get_idb_changes',data={'uid':self.cfg.uid})
+        return r.json()
