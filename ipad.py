@@ -1,103 +1,34 @@
 
 ## my imports
-import ipad.dispatch as dp 
-import ipad.hooks as hooks
+
 from ipad.config import Config
-from ipad.db import DB
 from ipad.changer import Changer
 from ipad.ui import UI
 from ipad.cmd import Commands
-
+from ipad.controler import IdaAction
+from ipad.compat import wait
 ## other things
 import os
-import zmq
-import json
-import hashlib
-import datetime,threading
-from copy import deepcopy
+import threading
 
-def timestamp():
-    return int(datetime.datetime.now().strftime('%s'))
+def reluch(ui):
+    wait(3)
+    print 'x'
+    ui.Show('ipad')
 
-def get_hash(_m):
-    m = deepcopy(_m)
 
-    ## there are some fields that will change
-    ## no mater what.. so remove them...
-    if 'struct' in m: del m['struct']
-    if 'member' in m: del m['member']
-    if 'enum'   in m: del m['enum']
+class H(idaapi.UI_Hooks):
 
-    d = json.dumps(m,sort_keys=True,indent=0)
-    return hashlib.sha256(d).hexdigest()
-
-class IdaAction(object):
-    def __init__(self,cfg,uhist):
-        self.cfg = cfg
-        self.uid = cfg.uid
-        self.uhist = uhist
-        self._init_zmq()
-        self._init_db(cfg.db)
-        self._init_hooks()
-
+    def set_ctrl(self,ctrl):
+        self.ctrl = ctrl
+    
+    def current_tform_changed(self,a0,a1):
+        #print '--'
+        t1=idaapi.get_tform_title(a0)
+        t2=idaapi.get_tform_title(a1)
+        if t1 == 'IDA View-A' and t2 == 'ipad':
+            self.ctrl.relaunch()
         
-    def _init_zmq(self):
-        
-        __ctx = zmq.Context()
-        self.out_sock = __ctx.socket(zmq.PUB)
-
-    def _init_db(self,db):
-        self.db = DB(db)
-        self.uhist.setDB(self.db)
-        self.uhist.setUser(self.cfg.user)
-
-    def _init_hooks(self):
-        self.hooks = [ h(self) for h in hooks.HOOKS]
-     
-    def _handle_action(self,msg):
-        t = timestamp()
-        h = get_hash(msg)
-        msg.update({'timestamp':t,'hash':h})
-
-        ## this is local one
-        if 'user'  not in msg:
-            msg.update({'user':self.cfg.user,'key':self.cfg.key,'ssid':self.cfg.ssid})
-            self.out_sock.send_json(msg)
-            del msg['key']
-            
-        # this is remote one
-        elif self.cfg.automatic:
-            dp.dispath(msg)
-        
-        self.uhist._append(msg)
-        self.db.record(msg)
-        del msg
-
-    def start(self):
-        self.uhist._populate(self.db.get_all_commits())
-        self.out_sock.connect('tcp://localhost:1337')
-        self._start_hooks()
-        
-        
-    def relaod_hooks(self):
-        global hooks
-        hooks = reload(hooks)
-        self._stop_hooks()
-        self._init_hooks()
-        self._start_hooks()
-
-    def _start_hooks(self):
-        for h in self.hooks: h.hook()
-
-    def _stop_hooks(self):
-        for h in self.hooks: h.unhook()
-                    
-    def end(self):
-        self._stop_hooks()
-        self.out_sock.close()
-
-
-
 class changer(idaapi.plugin_t):
     flags = 0
     comment = ""
@@ -105,35 +36,94 @@ class changer(idaapi.plugin_t):
     wanted_name = "Changer Plugin"
     wanted_hotkey = ""
 
+    @property
+    def have_idb(self):
+        return bool(idc.GetIdbPath())
+    
     def init(self):
-        self.cfg = Config()
-        self.ui = UI()
+        self.ui = UI(self)
+        self.load_config()
+
+        return idaapi.PLUGIN_OK
+
+    def load_config(self):
+
+        if hasattr(self,'cfg'):
+            del self.cfg
         
+        
+        self.cfg = Config()
         if not os.path.exists(self.cfg.dirname()):
             os.mkdir(self.cfg.dirname())
-
         self.cfg.load_cfg()
-        self.a = IdaAction(self.cfg,self.ui.history)
-        self.t = Changer(self.a)
-        print self.t
-        self.cc = Commands(self.a,self.t)
-        print '[*] ipad started - uid: %s | db: %s' % (self.cfg.uid,self.cfg.db)
-        return idaapi.PLUGIN_OK
-    
-    def run(self,arg):
+        
+    def open_ui(self):
         self.ui.Show('ipad')
-        self.t.start()
-        self.a.start()
 
+    def store_idb(self):
+        if self.have_idb:
+            idc.SaveBase(idc.GetIdbPath())
+        self.cc.store_idb()
+        
+    def load_idb(self,*a):
+        self.h = H()
+        self.h.set_ctrl(self)
+        self.h.hook()
+        self.load_data = a
+        self.cc.load_idb(*a)
+        
+    def relaunch(self):
+        self.h.unhook()
+        idc.Wait()
+        del self.h;
+        self.ui.reload()
+        self.load_config()
+
+        self.cfg.ssid = self.load_data[1]
+        self.cfg.uid = self.load_data[0]
+        
+        self.run(0)
+
+    def dispatch(self,d):
+        self.a.dispatch(d)
+        
+    def run(self,arg):
+        
+        print '[*] ipad started - uid: %s | db: %s' % (self.cfg.uid,self.cfg.db)
+                    
+        if not self.have_idb:
+            self.cc = Commands(self,None)#self.t)
+            self.ui.storage.setCtrl(self)
+            self.ui.storage._populate(self.cc.get_storage())
+            self.ui.Show('ipad',UI.FORM_CENTERED|UI.FORM_MENU|64)
+        else:            
+            self.a = IdaAction(self.cfg,self.ui.history)
+            self.t = Changer(self.a)
+            if hasattr(self,'cc'):
+                self.cc.plg =self.a
+                self.cc.ch = self.t
+            else:
+                self.cc = Commands(self.a,self.t)
+            if not self.ui.all_active():
+                self.ui.Show('ipad')
+                
+            self.cc.get_changes()
+            self.ui.sessions._populate(self.cc.get_sessions())
+            self.ui.sessions.setCtrl(self.a)
+            self.t.start()
+            self.a.start()
+            
     def term(self):
+        if hasattr(self,'a'):
+            self.a.end()
+        if hasattr(self,'t'):
+            self.t.terminate()
+            self.t.join()
         print '[+] going down'
-        self.a.end()
-        self.t.terminate()
-        self.t.join()
-
+        
     def __del__(self):
-        super(changer,self).__del__()
         self.term()
+        super(changer,self).__del__()
     
         
 
