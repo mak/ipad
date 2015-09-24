@@ -83,6 +83,14 @@ class Change(BaseModel):
     data      = CharField()
     hash      = FixedCharField(max_length=64)
 
+    def json(self):
+        data = json.loads(self.data)
+        data['id'] = self.id
+        data['timestamp'] = self.timestamp.strftime('%s')
+        data['user'] = self.user.username
+        data['hash'] = self.hash
+        return data
+    
 def start_db():
     new = False
     if not os.path.exists(config.DB):

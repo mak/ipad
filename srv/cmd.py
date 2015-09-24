@@ -74,7 +74,7 @@ def get_my_sessions():
     for idb in db.get_my_idbs(user):
         ret[idb.name]= [ ]    
         for ses in idb.sessions:
-            ret[idb.name].append({'tm':ses.timestamp.strftime('%s'),'tag':ses.tag,'ssid':ses.ssid})
+            ret[idb.name].append({'timestamp':ses.timestamp.strftime('%s'),'tag':ses.tag,'ssid':ses.ssid})
         
     response.content_type = 'application/json'
     return json.dumps(ret)     
@@ -90,7 +90,8 @@ def list_available_idbs():
     for s in user.get_readable():
         if not s.idb.name in r:
             r[s.idb.name] = []
-        r[s.idb.name].append({'uid':s.idb.uid,'tm':s.timestamp.strftime('%s'),'tag':s.tag,'ssid':s.ssid})
+        r[s.idb.name].append({'uid':s.idb.uid,'timestamp':s.timestamp.strftime('%s'),
+                              'tag':s.tag,'ssid':s.ssid})
         
     response.content_type = 'application/json'
     return json.dumps(r)     
@@ -117,6 +118,19 @@ def get_idb():
     response.set_header('X-IDB-Name',ss.idb.name)
     return data
 
+@route('/get_changes',method='POST')
+@with_user
+def get_changes():
+    ssid =  request.forms.get('ssid')
+    ss = db.get_session(ssid)
+    r= []
+    for ch in ss.changes:
+        r.append(ch.json())
+        
+    response.content_type = 'application/json'
+    return json.dumps(r)     
+
+
 @route('/get_stype',method='POST')
 @with_user
 def get_stype():
@@ -126,8 +140,22 @@ def get_stype():
     response.content_type = 'application/json'
     return json.dumps(r)     
 
-
-
+@route('/get_idb_changes',method='POST')
+@with_user
+def get_idb_changes():
+    user = get_user()
+    uid = request.forms.get('uid')
+    r = []
+    for ss in user.get_readable():
+        if ss.idb.uid == uid:
+            el = {'ssid':ss.ssid,'tag':ss.tag,'timestamp': ss.timestamp.strftime('%s'),'changes':[]}
+            for ch in ss.changes:
+                el['changes'].append(ch.json() )
+            r.append(el)
+            
+    response.content_type = 'application/json'
+    return json.dumps(r)     
+    
 def run_server():
     db.start_db()
     bottle.run(host=config.CMD_HOST, port=config.CMD_PORT)
