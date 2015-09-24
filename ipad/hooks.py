@@ -13,7 +13,7 @@ class IDPH(idaapi.IDP_Hooks):
         return 0
 
     def savebase(self):
-        if idc.AskYN(True,'Clear current history?'):
+        if idc.AskYN(True,'Clear current history?') > 0:
             self.ctrl.db.clear_history()
             self.ctrl.uhist._clear()
         return 0
