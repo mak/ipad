@@ -1,0 +1,9 @@
+#client
+zmq
+requests
+#PySide od hexrays
+
+#server
+zmq
+bottle
+peewee
