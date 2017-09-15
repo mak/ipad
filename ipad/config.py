@@ -24,7 +24,7 @@ class C(object):
         ## this is new analysis
         if not os.path.exists(c):
             shutil.copy(self.main_cfg,c)
-
+            
             
         self.cfg = ConfigParser.ConfigParser(dict_type=AttrDict)
         self.cfg.read(c)
@@ -93,6 +93,8 @@ class Config(C):
         
     @property
     def ssid(self):
+        if not hasattr(self.main,'ssid'):
+            return 0
         return int(self.main.ssid)
     
     @ssid.setter

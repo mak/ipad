@@ -124,8 +124,9 @@ class changer(idaapi.plugin_t):
             if not self.ui.all_active():
                 self.ui.Show('ipad')
                 
-            self.cc.get_changes()
-            self.ui.sessions._populate(self.cc.get_sessions())
+            if self.cc.get_changes():
+                self.ui.sessions._populate(self.cc.get_sessions())
+                
             self.ui.sessions.setCtrl(self.a)
             self.t.start()
             self.a.start()
