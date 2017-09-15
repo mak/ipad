@@ -7,11 +7,8 @@ from ipad.db import DB
 import zmq
 import json
 import hashlib
-import datetime,threading
+import time,threading
 from copy import deepcopy
-
-def timestamp():
-    return int(datetime.datetime.now().strftime('%s'))
 
 def get_hash(_m):
     m = deepcopy(_m)
@@ -55,8 +52,7 @@ class IdaAction(object):
             msg.update({'hash':h})
             
         if 'timestamp' not in msg:
-            t = timestamp()
-            msg.update({'timestamp':t})
+            msg.update({'timestamp':int(time.time())})
 
         ## this is local one
         if 'user'  not in msg:

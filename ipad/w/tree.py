@@ -54,7 +54,7 @@ class WTree(QMainWindow):
         item = QStandardItem(n)
         self.model.appendRow(item)
         for el in elements:
-            tm = datetime.datetime.fromtimestamp(int(el['timestamp'])).strftime('%T %D')
+            tm = datetime.datetime.fromtimestamp(int(el['timestamp'])).strftime('%H:%M:%S %m/%d/%y')
             obj = MyItem('%s - %s - %s' % (tm,el['action'],el['user']))
             obj.xdata = el
             item.appendRow(obj)
@@ -64,7 +64,7 @@ class WTree(QMainWindow):
     def _populate(self,data):
         self.model.clear()
         for ss in data:
-            tm = datetime.datetime.fromtimestamp(int(ss['timestamp'])).strftime('%T %D')
+            tm = datetime.datetime.fromtimestamp(int(ss['timestamp'])).strftime('%H:%M:%S %m/%d/%y')
             n = '%s - %s' % (ss['tag'],tm)
             self._add_session(n,ss['changes'])
 
