@@ -1,9 +1,8 @@
 
-from PySide import QtGui, QtCore
-from PySide.QtGui import QIcon
 import datetime,json
+from ipad.qtglue import *
 
-class MyItem(QtGui.QTableWidgetItem):
+class MyItem(QTableWidgetItem):
 
     def __init__(self,*a,**k):
         super(MyItem,self).__init__(*a,**k)
@@ -17,10 +16,10 @@ class MyItem(QtGui.QTableWidgetItem):
         self.__data = v
         
 
-class WHistory(QtGui.QMainWindow):
+class WHistory(QMainWindow):
 
     def __init__(self,parent):
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
         self.parent = parent
         self.name = 'History'
         self.icon = QIcon('')
@@ -29,14 +28,14 @@ class WHistory(QtGui.QMainWindow):
         self._prepare()
 
         self.hist_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self.hist_list,QtCore.SIGNAL('customContextMenuRequested(QPoint)'), self.ctxMenu)
+        self.hist_list.customContextMenuRequested.connect(self.ctxMenu)
         self.acc_apply.triggered.connect(self.do_acc_apply)
         self.popMenu.addAction(self.acc_apply)
         self.acc_remov.triggered.connect(self.do_acc_remov)
         self.popMenu.addAction(self.acc_remov)
   
-        widg = QtGui.QWidget()
-        wlay = QtGui.QVBoxLayout()
+        widg = QWidget()
+        wlay = QVBoxLayout()
         wlay.addWidget(self.hist_list)
         wlay.addWidget(self.hist_elem)
         widg.setLayout(wlay)
@@ -75,7 +74,7 @@ class WHistory(QtGui.QMainWindow):
                 itm.xdata = el
                 self.hist_list.setItem(row,cl,itm)
             self.hist_list.resizeRowToContents(row)
-        self.hist_list.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)    
+        self.hist_list.setSelectionMode(QAbstractItemView.SingleSelection)    
         self.hist_list.resizeColumnsToContents()
 
 
@@ -111,20 +110,20 @@ class WHistory(QtGui.QMainWindow):
         for row,elm in enumerate(msg.items()):
             has_itm = False
             for cl,el in enumerate(elm):
-                itm = QtGui.QTableWidgetItem(str(el))
+                itm = QTableWidgetItem(str(el))
                 self.hist_elem.setItem(row,cl,itm)
             self.hist_elem.resizeRowToContents(row)
-        self.hist_elem.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)    
+        self.hist_elem.setSelectionMode(QAbstractItemView.SingleSelection)    
         self.hist_elem.resizeColumnsToContents()
 
             
     def _prepare(self):
-        self.hist_list = QtGui.QTableWidget()
+        self.hist_list = QTableWidget()
         self.hist_list.clicked.connect(self._onHistClicked)
-        self.hist_elem = QtGui.QTableWidget()
-        self.popMenu = QtGui.QMenu(self)
-        self.acc_apply = QtGui.QAction('apply', self)
-        self.acc_remov =QtGui.QAction('remove', self)
+        self.hist_elem = QTableWidget()
+        self.popMenu = QMenu(self)
+        self.acc_apply = QAction('apply', self)
+        self.acc_remov =QAction('remove', self)
 
         
     def ctxMenu(self,point):

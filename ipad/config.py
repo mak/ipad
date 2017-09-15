@@ -98,6 +98,19 @@ class Config(C):
     @ssid.setter
     def ssid(self,v):
         self.set_value('ssid',v)
-        
+
+    @property
+    def server(self):
+        return self.main.server
+
+    @property
+    def socket_out(self):
+        return 'tcp://%s:1337' % self.server
+
+    @property
+    def socket_in(self):
+        return 'tcp://%s:1338' % self.server
+
+    
 __all__ = [Config]
 

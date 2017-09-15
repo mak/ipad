@@ -6,16 +6,15 @@ import os
 import hashlib
 import requests
 import threading
-from ipad.compat import Opener,wait
+from ipad.compat import open_idb,wait
 
 class Commands(object):
 
     def __init__(self,plg,ch):
         self.plg = plg
         self.cfg = plg.cfg
-        self.op  = Opener()
         self.ch  = ch
-        
+        self.server = 'http://%s:8080/' % self.cfg.server
     def cmd(self,cmd,*args,**kwargs):
         if 'data' not in kwargs:
             data = {}
@@ -29,7 +28,7 @@ class Commands(object):
             data['uid'] = self.cfg.uid
         kwargs['data'] = data
 
-        url = 'http://localhost:8080/' + cmd
+        url = self.server + cmd
         r = requests.post(url,*args,**kwargs)
         return r
 
@@ -58,7 +57,7 @@ class Commands(object):
         #self.plg._stop_hooks()
 
         #threading.Thread(target=self._relunch).start()
-        self.op.open_file('/tmp/ipad/'+name)
+        open_idb('/tmp/ipad/'+name)
 
     def store_idb(self):
         

@@ -1,8 +1,7 @@
-from PySide import QtGui, QtCore
-from PySide.QtGui import QIcon
 import datetime,json
+from ipad.qtglue import *
 
-class MyItem(QtGui.QStandardItem):
+class MyItem(QStandardItem):
 
     def __init__(self,*a,**k):
         super(MyItem,self).__init__(*a,**k)
@@ -15,44 +14,44 @@ class MyItem(QtGui.QStandardItem):
     def xdata(self,v):
         self.__data = v
         
-class WTree(QtGui.QMainWindow):
+class WTree(QMainWindow):
 
     def __init__(self,parent):
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
         self.parent = parent
         self.name = 'Tree'
         self.icon = QIcon('')
         self.rcount = 0
 
         
-        self.chg_elem = QtGui.QTableWidget()
+        self.chg_elem = QTableWidget()
                 
-        self.treeView = QtGui.QTreeView()
+        self.treeView = QTreeView()
         self.treeView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.treeView.customContextMenuRequested.connect(self.openMenu)
         self.treeView.clicked.connect(self._onChgClicked)
 
-        self.refsh_bt = QtGui.QPushButton(self.treeView)
+        self.refsh_bt = QPushButton(self.treeView)
         self.refsh_bt.setText('Refresh')
         self.refsh_bt.clicked.connect(self.refresh)
 
         
-        self.model = QtGui.QStandardItemModel()
+        self.model = QStandardItemModel()
         self.treeView.setModel(self.model)
         
         self.model.setHorizontalHeaderLabels([self.tr("Object")])
         
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         layout.addWidget(self.treeView)
         layout.addWidget(self.chg_elem)
 
-        widg=QtGui.QWidget()
+        widg=QWidget()
         widg.setLayout(layout)
         self.setCentralWidget(widg)
 
         
     def _add_session(self, n, elements):
-        item = QtGui.QStandardItem(n)
+        item = QStandardItem(n)
         self.model.appendRow(item)
         for el in elements:
             tm = datetime.datetime.fromtimestamp(int(el['timestamp'])).strftime('%T %D')
@@ -87,10 +86,10 @@ class WTree(QtGui.QMainWindow):
                 index = index.parent()
                 level += 1
                 
-        menu = QtGui.QMenu()
+        menu = QMenu()
         if level == 0:
             pass
-            # acc =  QtGui.QAction("",self)
+            # acc =  QAction("",self)
             # f_action = lambda : self._load_change(data)
             # menu.addAction(acc)
             # acc.triggered.connect(f_action)
@@ -99,7 +98,7 @@ class WTree(QtGui.QMainWindow):
             idx = indexes[0]
             m = idx.model()
             data = m.item(idx.column()).child(idx.row()).xdata
-            acc =  QtGui.QAction("Pick",self)
+            acc =  QAction("Pick",self)
             f_action = lambda : self._load_change(data)
             menu.addAction(acc)
             acc.triggered.connect(f_action)
@@ -126,8 +125,8 @@ class WTree(QtGui.QMainWindow):
         self.chg_elem.setRowCount(len(msg))
         for row,elm in enumerate(msg.items()):
             for cl,el in enumerate(elm):
-                itm = QtGui.QTableWidgetItem(str(el))
+                itm = QTableWidgetItem(str(el))
                 self.chg_elem.setItem(row,cl,itm)
             self.chg_elem.resizeRowToContents(row)
-        self.chg_elem.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)    
+        self.chg_elem.setSelectionMode(QAbstractItemView.SingleSelection)    
         self.chg_elem.resizeColumnsToContents()

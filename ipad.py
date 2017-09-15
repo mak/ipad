@@ -9,7 +9,7 @@ from ipad.controler import IdaAction
 from ipad.compat import wait
 ## other things
 import os
-import threading
+
 
 def reluch(ui):
     wait(3)

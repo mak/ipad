@@ -2,7 +2,7 @@ import zmq
 import json
 import threading 
 import ipad.dispatch as dp
-from PySide import QtCore
+from ipad.qtglue import QtCore
 
 
 
@@ -47,7 +47,7 @@ class Changer(QtCore.QThread):
         __ctx = zmq.Context()
         in_sock = __ctx.socket(zmq.SUB)
         in_sock.setsockopt(zmq.SUBSCRIBE,ssid)
-        in_sock.connect('tcp://localhost:1338')
+        in_sock.connect(self.c.cfg.socket_in)
 
         poller = zmq.Poller()
         poller.register(in_sock,zmq.POLLIN)

@@ -1,8 +1,8 @@
-from PySide import QtGui, QtCore
-from PySide.QtGui import QIcon
-import datetime,json
 
-class MyItem(QtGui.QStandardItem):
+import datetime,json
+from ipad.qtglue import *
+
+class MyItem(QStandardItem):
 
     def __init__(self,*a,**k):
         super(MyItem,self).__init__(*a,**k)
@@ -15,19 +15,19 @@ class MyItem(QtGui.QStandardItem):
     def xdata(self,v):
         self.__data = v
         
-class WMgmt(QtGui.QMainWindow):
+class WMgmt(QMainWindow):
 
     def __init__(self,parent):
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
         self.parent = parent
         self.name = 'Managment'
         self.icon = QIcon('')
         self.rcount = 0
 
 
-        self.users_widg = QtGui.QWidget()
-        self.users_form = QtGui.QFormLayout()
-        self.users_box = QtGui.QComboBox(self.users_widg)
+        self.users_widg = QWidget()
+        self.users_form = QFormLayout()
+        self.users_box = QComboBox(self.users_widg)
         self.users_box.addItems(['mak','test'])
         
         # self.refsh_bt = QtGui.QPushButton(self.treeView)
@@ -36,11 +36,11 @@ class WMgmt(QtGui.QMainWindow):
 
         
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
 #        layout.addWidget(self.treeView)
         layout.addWidget(self.users_widg)
 
-        widg=QtGui.QWidget()
+        widg=QWidget()
         widg.setLayout(layout)
         self.setCentralWidget(widg)
 

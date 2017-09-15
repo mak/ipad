@@ -52,7 +52,7 @@ class IdaAction(object):
 
         if 'hash' not in msg:
             h = get_hash(msg)
-            m.update({'hash':h})
+            msg.update({'hash':h})
             
         if 'timestamp' not in msg:
             t = timestamp()
@@ -74,7 +74,7 @@ class IdaAction(object):
 
     def start(self):
         self.uhist._populate(self.db.get_all_commits())
-        self.out_sock.connect('tcp://localhost:1337')
+        self.out_sock.connect(self.cfg.socket_out)
         self._start_hooks()
         
         

@@ -1,6 +1,6 @@
 import idaapi,idc
-from PySide import QtGui,QtCore
 
+from ipad.qtglue import *
 from ipad.w.history import WHistory
 from ipad.w.storage import WStorage
 from ipad.w.tree import WTree
@@ -9,16 +9,15 @@ from ipad.w.mgmt import WMgmt
 IDB_WIDGETS = [WHistory,WTree,WMgmt] 
 FRESH_WIDGETS = [WStorage]
 
-class UI(idaapi.PluginForm):
+class UI(xPluginForm):
 
     def __init__(self,ctrl):
         super(UI,self).__init__()
         self.setupWidgets()
-        self.QtGui = QtGui ## workaround for missing ctx in idaapi...
         self.ctrl = ctrl
         
     def OnCreate(self,form):
-        self.parent = self.FormToPySideWidget(form,self)        
+        self.parent = self.ConvertToQt(form,self)        
         self.PupulateForm()
 
         
@@ -86,18 +85,18 @@ class UI(idaapi.PluginForm):
             
     def setButton(self):
         if idc.GetIdbPath():
-            self.save_bt = QtGui.QPushButton(self.tabs)
+            self.save_bt = QPushButton(self.tabs)
             self.save_bt.setText('Save')
             self.save_bt.clicked.connect(self.save_idb)
         
     def PupulateForm(self):
 
-        self.tabs = QtGui.QTabWidget()
+        self.tabs = QTabWidget()
         self.tabs.setTabsClosable(False)
         self.add_tabs()
         self.setButton()
         
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         if hasattr(self,'save_bt'):
             layout.addWidget(self.save_bt)
         layout.addWidget(self.tabs)
