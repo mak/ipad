@@ -43,7 +43,7 @@ class WStorage(QMainWindow):
         item = QStandardItem(n)
         parent.appendRow(item)
         for el in elements:
-            tm = datetime.datetime.fromtimestamp(int(el['timestamp'])).strftime('%T %D')
+            tm = datetime.datetime.fromtimestamp(int(el['timestamp'])).strftime('%H:%M:%S %m/%d/%Y')
             obj = MyItem('%s - %s' % (el['tag'],tm))
             obj.xdata = el
             item.appendRow(obj)

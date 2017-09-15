@@ -51,8 +51,12 @@ class Commands(object):
         if not self.session_is_exec(ssid):
             name +='.idb'
 
-        tmpp = os.path.join(tempfile.gettempdir(),'ipad',name)
-        with open(tmpp,'w') as f:
+        tmpd = os.path.join(tempfile.gettempdir(),'ipad')
+        tmpp = os.path.join(tmpd,name)
+        if not os.path.exists(tmpd):
+            os.makedirs(tmpd)
+            
+        with open(tmpp,'wb') as f:
             f.write(r.content)
 
         ## terminate ipad
@@ -86,12 +90,14 @@ class Commands(object):
             if not tag:
                 return
             
-        with open(p) as f:
+        with open(p,'rb') as f:
             data = f.read()
             
         h = hashlib.sha256(data).hexdigest()
         data = {'ssid':ssid,'uid':self.cfg.uid,'hash':h,'tag':tag}
-        r= self.cmd('create_idb',data=data,files={'data':open(p,'rb')}).json()
+        with open(p,'rb') as fd:
+            r= self.cmd('create_idb',data=data,files={'data':fd}).json()
+            
         if r['session'] != ssid:
             self.cfg.ssid = r['session']
             print self.ch
@@ -102,10 +108,14 @@ class Commands(object):
         return r.json()
 
     def get_changes(self):
+        if not self.cfg.ssid:
+            return False
+        
         r = self.cmd('get_changes',data={'ssid':self.cfg.ssid})
         for msg in r.json():
             self.plg.db.record(msg)
-
+        return True
+    
     def get_sessions(self):
         r = self.cmd('get_idb_changes',data={'uid':self.cfg.uid})
         return r.json()
