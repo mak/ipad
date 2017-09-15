@@ -6,6 +6,7 @@ import os
 import hashlib
 import requests
 import threading
+import tempfile
 from ipad.compat import open_idb,wait
 
 class Commands(object):
@@ -49,15 +50,16 @@ class Commands(object):
         name = r.headers['X-IDB-Name']
         if not self.session_is_exec(ssid):
             name +='.idb'
-            
-        with open('/tmp/ipad/'+name,'w') as f:
+
+        tmpp = os.path.join(tempfile.gettempdir(),'ipad',name)
+        with open(tmpp,'w') as f:
             f.write(r.content)
 
         ## terminate ipad
         #self.plg._stop_hooks()
 
         #threading.Thread(target=self._relunch).start()
-        open_idb('/tmp/ipad/'+name)
+        open_idb(tmpp)
 
     def store_idb(self):
         
