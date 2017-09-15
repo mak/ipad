@@ -45,3 +45,9 @@ def test_imports():
     return test_import('zmq','pyzmq and zmq') and \
            test_import('requests')
         
+
+def is_64bit():
+    try:
+        return idaapi.get_inf_structure().is_64bit()
+    except:
+        return idaapi.BADADDR > 0xffffffff

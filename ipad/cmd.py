@@ -7,7 +7,7 @@ import hashlib
 import requests
 import threading
 import tempfile
-from ipad.compat import open_idb,wait
+from ipad.compat import open_idb,wait,is_64bit
 
 class Commands(object):
 
@@ -49,7 +49,7 @@ class Commands(object):
         r = self.cmd('get',data={'ssid':ssid,'uid':uid})
         name = r.headers['X-IDB-Name']
         if not self.session_is_exec(ssid):
-            name +='.idb'
+            name += '.i64' if is_64bit() else '.idb'
 
         tmpd = os.path.join(tempfile.gettempdir(),'ipad')
         tmpp = os.path.join(tmpd,name)
