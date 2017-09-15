@@ -1,11 +1,24 @@
 
-## my imports
+
+import sys,os
+
+## for a case when old ida didn't expand path on its own
+def realpath():
+    my_path = os.path.abspath(os.path.expanduser(__file__))
+    if os.path.islink(my_path):
+        my_path = os.readlink(my_path)
+    return os.path.dirname(my_path)
+rp = realpath()
+if rp not in sys.path:
+    sys.path.append(rp)
+
+# test imports
 import idc
 from ipad.compat import wait,test_imports
 if not test_imports():
     idc.error('Failed to import needed libs')
 
-
+## my imports
 from ipad.config import Config
 from ipad.changer import Changer
 from ipad.ui import UI
