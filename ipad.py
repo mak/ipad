@@ -1,12 +1,16 @@
 
 ## my imports
+import idc
+from ipad.compat import wait,test_imports
+if not test_imports():
+    idc.error('Failed to import needed libs')
+
 
 from ipad.config import Config
 from ipad.changer import Changer
 from ipad.ui import UI
 from ipad.cmd import Commands
 from ipad.controler import IdaAction
-from ipad.compat import wait
 ## other things
 import os
 

@@ -29,3 +29,19 @@ def open_idb(path):
     if not p.waitForStarted():
         print '[-] failed to run ida'
     idaapi.qexit(0)
+
+def test_import(n,p=None):
+    msg_t = "couldn't import %s - you should install %s"
+    r = False
+    try:
+        __import__(n)
+        r = True
+    except ImportError:
+        msg= msg_t % (n,p or n)
+        print '[-]',msg
+        idc.warning(msg)
+    return r
+def test_imports():
+    return test_import('zmq','pyzmq and zmq') and \
+           test_import('requests')
+        
