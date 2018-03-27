@@ -17,6 +17,7 @@ class MyItem(QStandardItem):
 class WStorage(QMainWindow):
 
     def __init__(self,parent):
+        
         QMainWindow.__init__(self)
         self.parent = parent
         self.name = 'Storage'
@@ -65,9 +66,9 @@ class WStorage(QMainWindow):
     def openMenu(self, position):
     
         indexes = self.treeView.selectedIndexes()
+        level = 0
         if len(indexes) > 0:
-        
-            level = 0
+            
             index = indexes[0]
             while index.parent().isValid():
                 index = index.parent()
@@ -86,8 +87,6 @@ class WStorage(QMainWindow):
         menu.exec_(self.treeView.viewport().mapToGlobal(position))
 
     def _load_idb(self,data):
-        # print data
-        # print 'loaded'
         self.parent.ctrl.load_idb(data['uid'],data['ssid'])
 
         

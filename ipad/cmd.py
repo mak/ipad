@@ -7,7 +7,7 @@ import hashlib
 import requests
 import threading
 import tempfile
-from ipad.compat import open_idb,wait,is_64bit
+from ipad.compat import load_idb,wait,is_64bit
 
 class Commands(object):
 
@@ -16,6 +16,7 @@ class Commands(object):
         self.cfg = plg.cfg
         self.ch  = ch
         self.server = 'http://%s:8080/' % self.cfg.server
+        
     def cmd(self,cmd,*args,**kwargs):
         if 'data' not in kwargs:
             data = {}
@@ -33,13 +34,6 @@ class Commands(object):
         r = requests.post(url,*args,**kwargs)
         return r
 
-    def _relunch(self):
-        ## wait 200
-        wait(5)
-        print '[*] please wait untill aa is finished'
-        wait(15)
-        #self.plg._start_hooks()
-        print '[+] hooks re-luched'
 
     def session_is_exec(self,ssid):
         return not self.cmd('get_stype',data={'ssid':ssid}).json()['r']
@@ -59,11 +53,8 @@ class Commands(object):
         with open(tmpp,'wb') as f:
             f.write(r.content)
 
-        ## terminate ipad
-        #self.plg._stop_hooks()
-
-        #threading.Thread(target=self._relunch).start()
-        open_idb(tmpp)
+        ## fire up new ida and die
+        load_idb(tmpp)
 
     def store_idb(self):
         

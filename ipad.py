@@ -1,22 +1,7 @@
 
 
 import sys,os
-
-## for a case when old ida didn't expand path on its own
-def realpath():
-    my_path = os.path.abspath(os.path.expanduser(__file__))
-    if os.path.islink(my_path):
-        my_path = os.readlink(my_path)
-    return os.path.dirname(my_path)
-rp = realpath()
-if rp not in sys.path:
-    sys.path.append(rp)
-
-# test imports
-import idc
-from ipad.compat import wait,test_imports
-if not test_imports():
-    idc.error('Failed to import needed libs')
+import idc,idaapi
 
 ## my imports
 from ipad.config import Config
@@ -26,32 +11,14 @@ from ipad.cmd import Commands
 from ipad.controler import IdaAction
 ## other things
 import os
-
-
-def reluch(ui):
-    wait(3)
-    print 'x'
-    ui.Show('ipad')
-
-
-class H(idaapi.UI_Hooks):
-
-    def set_ctrl(self,ctrl):
-        self.ctrl = ctrl
-    
-    def current_tform_changed(self,a0,a1):
-        #print '--'
-        t1=idaapi.get_tform_title(a0)
-        t2=idaapi.get_tform_title(a1)
-        if t1 == 'IDA View-A' and t2 == 'ipad':
-            self.ctrl.relaunch()
         
 class changer(idaapi.plugin_t):
-    flags = 0
-    comment = ""
-    help = ""
+    flags = idaapi.PLUGIN_FIX | idaapi.PLUGIN_DRAW
+    
+    comment = "comment"
+    help = "help"
     wanted_name = "Changer Plugin"
-    wanted_hotkey = ""
+    wanted_hotkey = "alt-shift-p"
 
     @property
     def have_idb(self):
@@ -60,15 +27,13 @@ class changer(idaapi.plugin_t):
     def init(self):
         self.ui = UI(self)
         self.load_config()
-
-        return idaapi.PLUGIN_OK
+        return idaapi.PLUGIN_KEEP
 
     def load_config(self):
 
         if hasattr(self,'cfg'):
             del self.cfg
-        
-        
+                
         self.cfg = Config()
         if not os.path.exists(self.cfg.dirname()):
             os.mkdir(self.cfg.dirname())
@@ -83,23 +48,7 @@ class changer(idaapi.plugin_t):
         self.cc.store_idb()
         
     def load_idb(self,*a):
-        self.h = H()
-        self.h.set_ctrl(self)
-        self.h.hook()
-        self.load_data = a
         self.cc.load_idb(*a)
-        
-    def relaunch(self):
-        self.h.unhook()
-        idc.Wait()
-        del self.h;
-        self.ui.reload()
-        self.load_config()
-
-        self.cfg.ssid = self.load_data[1]
-        self.cfg.uid = self.load_data[0]
-        
-        self.run(0)
 
     def dispatch(self,d):
         self.a.dispatch(d)
@@ -112,15 +61,12 @@ class changer(idaapi.plugin_t):
             self.cc = Commands(self,None)#self.t)
             self.ui.storage.setCtrl(self)
             self.ui.storage._populate(self.cc.get_storage())
-            self.ui.Show('ipad',UI.FORM_CENTERED|UI.FORM_MENU|64)
+            self.ui.Show('ipad',UI.FORM_CENTERED|UI.FORM_MENU)
         else:            
             self.a = IdaAction(self.cfg,self.ui.history)
             self.t = Changer(self.a)
-            if hasattr(self,'cc'):
-                self.cc.plg =self.a
-                self.cc.ch = self.t
-            else:
-                self.cc = Commands(self.a,self.t)
+            self.cc = Commands(self.a,self.t)
+            
             if not self.ui.all_active():
                 self.ui.Show('ipad')
                 
@@ -132,25 +78,23 @@ class changer(idaapi.plugin_t):
             self.a.start()
             
     def term(self):
+        print '[+] going down'
+
         if hasattr(self,'a'):
             self.a.end()
         if hasattr(self,'t'):
-            self.t.terminate()
-            self.t.join()
-        print '[+] going down'
+            self.t.quit()
         
-    def __del__(self):
-        self.term()
-        super(changer,self).__del__()
     
-        
-
 def PLUGIN_ENTRY():
   return changer()
 
 
-if __name__ == '__main__':
-    c = changer()
-    c.init()
-    c.run(0)
+# def loadx():
+#     idaapi.load_and_run_plugin(__file__,0)
     
+# if __name__ == '__main__':
+#     print sys.argv
+#     idaapi.autoWait()
+
+

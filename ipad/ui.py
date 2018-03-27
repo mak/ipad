@@ -25,7 +25,7 @@ class UI(xPluginForm):
         ## need to overwrte this so i can pass my flags,
         ## without beeing modified...
         if not opt:
-            opt = idaapi.PluginForm.FORM_TAB|idaapi.PluginForm.FORM_MENU|idaapi.PluginForm.FORM_RESTORE
+            opt = self.FORM_TAB|self.FORM_MENU|self.FORM_RESTORE|self.FORM_PERSIST 
 
         idaapi.plgform_show(self.__clink__, self, cap, opt)
         
@@ -80,7 +80,7 @@ class UI(xPluginForm):
         if not idc.GetIdbPath():
             idc.Warning('There is no active idb to save')
             return
-        self.ctrl.store_idb(tag)
+        self.ctrl.store_idb()
         
             
     def setButton(self):

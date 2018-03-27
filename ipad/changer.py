@@ -19,7 +19,7 @@ class Changer(QtCore.QThread):
     #     return self._stop.isSet()
 
     def dispatch(self,msg):
-        print msg
+        #print msg
         if not 'action' in msg:
             print '[-] wrong json...'
             return
@@ -61,7 +61,7 @@ class Changer(QtCore.QThread):
                 break
             if in_sock in ev:
                 [_, msg] = in_sock.recv_multipart()
-                print msg
+                #print msg
                 msg = json.loads(msg)
                 self.dispatch(msg)
                 
